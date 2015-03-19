@@ -32,6 +32,7 @@ user_list = location_data.keys()
 
 # Ego-network based feature
 # Bag-of-locations + cosine similarity.
+cosine_scores = dict()
 for user in user_list :
     cosine_out = open("cosine/"+str(user), "w")
     user_locations = user_visited_dict[user]
@@ -52,10 +53,12 @@ for user in user_list :
     for dst_user, score in scores :
         cosine_out.write(str(dst_user) + '\t' + str(score[0]) + '\n')
     cosine_out.close()
+    cosine_scores[user] = scores
 
 
 # Reachability based feature
 # Pathsim
+pathsim_scores = dict()
 for user in user_list :
     pathsim_out = open("pathsim2/"+str(user), "w")
     scores = dict()
@@ -73,5 +76,21 @@ for user in user_list :
     for dst_user, score in sorted(scores.items(), reverse=True, key=lambda x:x[1]) :
         pathsim_out.write(str(dst_user) + '\t' + str(score) + '\n')
     pathsim_out.close()
+    pathsim_scores[user] = scores
+
+# Combined similarity
+combined_score = dict()
+for user in user_list :
+    scores = dict()
+    combined_out = open("combined/"+str(user), "w")
+    for dst in user_list : 
+        cosine_score = cosine_scores[user][dst]
+        pathsim_score = pathsim_scores[user][dst]
+        combined_score = 0.5*cosine_score + 0.5*pathsim_score
+        scores[dst] = combined_score
+    scores = sorted(scores.items(), reverse=True, key=lambda x:x[1])
+    for dst_user, score in scores :
+        combined_out.write(str(dst_user) + '\t' + str(score) + '\n')
+    combined_out.close()
 
 
